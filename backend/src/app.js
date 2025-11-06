@@ -12,6 +12,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const betRoutes = require('./routes/bets');
 const groupRoutes = require('./routes/groups');
+const scoreRoutes = require('./routes/scores');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { testConnection } = require('./config/database');
 
@@ -71,6 +72,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/bets', betRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/scores', scoreRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

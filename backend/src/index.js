@@ -5,6 +5,7 @@
 
 const app = require('./app');
 const { initializeWebSocketServer } = require('./websocket');
+const scoreUpdater = require('./jobs/scoreUpdater');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 5000;
@@ -26,9 +27,13 @@ const server = app.listen(PORT, HOST, () => {
 // Initialize WebSocket server
 initializeWebSocketServer(server);
 
+// Start score updater job
+scoreUpdater.start();
+
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Closing server gracefully...');
+  scoreUpdater.stop();
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
@@ -37,6 +42,7 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   console.log('\nSIGINT received. Closing server gracefully...');
+  scoreUpdater.stop();
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
