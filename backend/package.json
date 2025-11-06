@@ -8,7 +8,10 @@
     "dev": "nodemon src/index.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "db:setup": "node src/database/setup.js",
+    "db:reset": "node src/database/setup.js reset",
+    "db:test": "node -e \"require('./src/config/database').testConnection()\""
   },
   "keywords": ["sports", "betting", "social", "api"],
   "author": "",

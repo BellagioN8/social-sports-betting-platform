@@ -88,13 +88,23 @@ npm run install:all
 
 3. Set up environment variables:
 ```bash
-# Create .env files in both frontend and backend directories
-# See .env.example for required variables
+# Backend configuration
+cd backend
+cp .env.example .env
+# Edit .env and update database credentials and secrets
+
+# Frontend configuration (if needed)
+cd ../frontend
+# Create .env if needed for API endpoints
 ```
 
 4. Set up the database:
 ```bash
-# Run database migrations (instructions coming soon)
+# Make sure PostgreSQL is running
+# The setup script will create the database if it doesn't exist
+
+cd backend
+npm run db:setup
 ```
 
 ### Development
@@ -174,6 +184,47 @@ npm run test:e2e
 2. Privacy mechanisms for group chats
 3. Clear distinction from actual betting services
 4. Sports prioritization for live scores (to be determined)
+
+## Database
+
+### Schema Overview
+
+The platform uses PostgreSQL with the following core tables:
+
+- **users**: User accounts and authentication
+- **groups**: Social betting groups
+- **group_members**: User-group relationships
+- **bets**: Betting records with encrypted details
+- **scores**: Cached live game data
+- **messages**: Group chat messages
+- **refresh_tokens**: JWT token management
+
+For detailed schema documentation, see [backend/src/database/SCHEMA.md](backend/src/database/SCHEMA.md)
+
+### Database Commands
+
+```bash
+# Set up database (creates DB and runs migrations)
+cd backend && npm run db:setup
+
+# Reset database (WARNING: deletes all data)
+cd backend && npm run db:reset
+
+# Test database connection
+cd backend && npm run db:test
+```
+
+### Environment Variables
+
+Required database environment variables in `backend/.env`:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=social_sports_betting
+DB_USER=postgres
+DB_PASSWORD=your_password
+```
 
 ## Technology Stack
 
