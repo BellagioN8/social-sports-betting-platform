@@ -4,6 +4,7 @@
  */
 
 const app = require('./app');
+const { initializeWebSocketServer } = require('./websocket');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 5000;
@@ -18,8 +19,12 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
   console.log(`Health check: http://${HOST}:${PORT}/health`);
   console.log(`API endpoints: http://${HOST}:${PORT}/api`);
+  console.log(`WebSocket: ws://${HOST}:${PORT}/ws`);
   console.log('='.repeat(50));
 });
+
+// Initialize WebSocket server
+initializeWebSocketServer(server);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
