@@ -1,0 +1,31 @@
+{
+  "name": "social-sports-betting-platform",
+  "version": "1.0.0",
+  "description": "A social platform for managing, tracking, and discussing sports betting activities without handling real bets",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm run test:coverage",
+    "test:e2e": "cd frontend && npm run cypress:run",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint",
+    "build": "cd frontend && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BellagioN8/social-sports-betting-platform.git"
+  },
+  "keywords": ["sports", "betting", "social", "platform"],
+  "author": "",
+  "license": "MIT"
+}
