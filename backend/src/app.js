@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const betRoutes = require('./routes/bets');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { testConnection } = require('./config/database');
 
@@ -67,6 +68,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/bets', betRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
