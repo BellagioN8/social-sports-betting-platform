@@ -1,17 +1,17 @@
 /**
  * Sports API Service
- * Integration with external sports data providers
- *
- * NOTE: This is a mock implementation for development.
- * Replace with actual API integration (e.g., ESPN, The Odds API, SportsData.io)
+ * Integration with API Sports (api-sports.io) for NFL and other sports
  */
 
 const axios = require('axios');
 
 // Configuration
-const API_KEY = process.env.SPORTS_API_KEY || 'demo_key';
-const API_URL = process.env.SPORTS_API_URL || 'https://api.example.com';
-const TIMEOUT = 10000; // 10 seconds
+const USE_REAL_API = process.env.USE_REAL_API === 'true';
+const API_SPORTS_KEY = process.env.API_SPORTS_KEY;
+const API_SPORTS_NFL_URL = 'https://v1.american-football.api-sports.io';
+const TIMEOUT = 15000; // 15 seconds
+// Note: Free tier API only has access to 2021-2023 seasons
+const CURRENT_NFL_SEASON = process.env.API_SPORTS_SEASON || '2023';
 
 class SportsAPIService {
   /**
@@ -21,13 +21,19 @@ class SportsAPIService {
    * @returns {Promise<Array>} Games array
    */
   static async fetchLiveScores(sportType, date = new Date()) {
-    // Mock implementation - replace with actual API call
     console.log(`Fetching live scores for ${sportType} on ${date.toDateString()}`);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Use real API for football (NFL) if enabled
+    if (USE_REAL_API && sportType === 'football' && API_SPORTS_KEY) {
+      try {
+        return await this._fetchNFLGamesFromAPI(date, 'all');
+      } catch (error) {
+        console.error('API Sports error, falling back to mock data:', error.message);
+        return this._generateMockGames(sportType, date);
+      }
+    }
 
-    // Return mock data
+    // Use mock data for other sports or if API is disabled
     return this._generateMockGames(sportType, date);
   }
 
@@ -39,12 +45,19 @@ class SportsAPIService {
   static async fetchGameById(gameId) {
     console.log(`Fetching game details for ${gameId}`);
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // If game ID is a number, it's from API Sports
+    if (USE_REAL_API && API_SPORTS_KEY && !gameId.includes('_')) {
+      try {
+        return await this._fetchNFLGameByIdFromAPI(gameId);
+      } catch (error) {
+        console.error('API Sports error:', error.message);
+        return null;
+      }
+    }
 
-    // Parse game ID to extract info
+    // Mock data fallback
     const [sportType, date, index] = gameId.split('_');
     const games = this._generateMockGames(sportType, new Date(date || Date.now()));
-
     return games[parseInt(index) || 0] || null;
   }
 
@@ -57,8 +70,20 @@ class SportsAPIService {
   static async fetchUpcomingGames(sportType, days = 7) {
     console.log(`Fetching upcoming games for ${sportType} (${days} days)`);
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Use real API for football (NFL) if enabled
+    if (USE_REAL_API && sportType === 'football' && API_SPORTS_KEY) {
+      try {
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + days);
 
+        return await this._fetchNFLGamesFromAPI(startDate, 'scheduled', endDate);
+      } catch (error) {
+        console.error('API Sports error, falling back to mock data:', error.message);
+      }
+    }
+
+    // Mock data fallback
     const games = [];
     const today = new Date();
 
@@ -74,44 +99,157 @@ class SportsAPIService {
   }
 
   /**
-   * Real API integration example (commented out)
-   * Uncomment and modify when integrating with actual API
+   * Fetch NFL games from API Sports
+   * @private
+   * @param {Date} date - Date to fetch
+   * @param {string} status - Game status filter (all, live, scheduled, finished)
+   * @param {Date} endDate - Optional end date for range
+   * @returns {Promise<Array>} Games array
    */
-  // static async fetchLiveScoresFromRealAPI(sportType, date) {
-  //   try {
-  //     const response = await axios.get(`${API_URL}/scores`, {
-  //       params: {
-  //         sport: sportType,
-  //         date: date.toISOString().split('T')[0],
-  //         api_key: API_KEY,
-  //       },
-  //       timeout: TIMEOUT,
-  //     });
-  //
-  //     // Transform API response to our format
-  //     return response.data.games.map((game) => ({
-  //       gameId: game.id,
-  //       sportType: sportType,
-  //       homeTeam: game.home.name,
-  //       awayTeam: game.away.name,
-  //       homeTeamLogo: game.home.logo,
-  //       awayTeamLogo: game.away.logo,
-  //       homeScore: game.home.score,
-  //       awayScore: game.away.score,
-  //       status: game.status,
-  //       period: game.period,
-  //       timeRemaining: game.time_remaining,
-  //       scheduledAt: new Date(game.scheduled_at),
-  //       startedAt: game.started_at ? new Date(game.started_at) : null,
-  //       completedAt: game.completed_at ? new Date(game.completed_at) : null,
-  //       venue: game.venue,
-  //       metadata: game,
-  //     }));
-  //   } catch (error) {
-  //     console.error('Error fetching scores from API:', error.message);
-  //     throw new Error('Failed to fetch live scores');
-  //   }
-  // }
+  static async _fetchNFLGamesFromAPI(date, status = 'all', endDate = null) {
+    try {
+      const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      const params = {
+        league: '1', // NFL league ID
+        season: CURRENT_NFL_SEASON.toString(),
+        date: dateStr,
+      };
+
+      // Add status filter if not 'all'
+      // Note: 'scheduled' status doesn't exist in API, only use 'live', 'finished', or omit for all
+      if (status !== 'all' && status !== 'scheduled') {
+        params.status = status;
+      }
+
+      const response = await axios.get(`${API_SPORTS_NFL_URL}/games`, {
+        params,
+        headers: {
+          'x-apisports-key': API_SPORTS_KEY,
+        },
+        timeout: TIMEOUT,
+      });
+
+      // Check for API errors
+      if (response.data?.errors && Object.keys(response.data.errors).length > 0) {
+        const errorMsg = JSON.stringify(response.data.errors);
+        console.warn('API Sports returned errors:', errorMsg);
+
+        // If it's a plan limitation, throw to fall back to mock data
+        if (errorMsg.includes('Free plans')) {
+          throw new Error(`API Sports plan limitation: ${errorMsg}`);
+        }
+      }
+
+      if (!response.data || !response.data.response || response.data.response.length === 0) {
+        console.log('No games found for the requested date/filters');
+        return [];
+      }
+
+      // Transform API Sports response to our format
+      return response.data.response.map((game) => this._transformNFLGame(game));
+    } catch (error) {
+      if (error.response) {
+        console.error('API Sports HTTP Error:', error.response.status, error.response.data);
+      } else {
+        console.error('API Sports Error:', error.message);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch single NFL game by ID from API Sports
+   * @private
+   * @param {string} gameId - Game ID
+   * @returns {Promise<object>} Game details
+   */
+  static async _fetchNFLGameByIdFromAPI(gameId) {
+    try {
+      const response = await axios.get(`${API_SPORTS_NFL_URL}/games`, {
+        params: {
+          id: gameId,
+        },
+        headers: {
+          'x-apisports-key': API_SPORTS_KEY,
+        },
+        timeout: TIMEOUT,
+      });
+
+      if (!response.data || !response.data.response || response.data.response.length === 0) {
+        return null;
+      }
+
+      return this._transformNFLGame(response.data.response[0]);
+    } catch (error) {
+      console.error('API Sports Error fetching game:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Transform API Sports NFL game data to our format
+   * @private
+   * @param {object} apiGame - Game data from API Sports
+   * @returns {object} Transformed game data
+   */
+  static _transformNFLGame(apiGame) {
+    // Map API Sports status to our status
+    const statusMap = {
+      'NS': 'scheduled',     // Not Started
+      'LIVE': 'live',        // In Progress
+      'Q1': 'live',
+      'Q2': 'live',
+      'HT': 'halftime',      // Halftime
+      'Q3': 'live',
+      'Q4': 'live',
+      'OT': 'live',          // Overtime
+      'BT': 'live',          // Break Time
+      'P': 'live',           // Pending
+      'SUSP': 'postponed',   // Suspended
+      'INT': 'postponed',    // Interrupted
+      'FT': 'final',         // Finished
+      'AET': 'final',        // After Extra Time
+      'PEN': 'final',        // Penalties
+      'PST': 'postponed',    // Postponed
+      'CANC': 'cancelled',   // Cancelled
+      'ABD': 'cancelled',    // Abandoned
+      'AWD': 'final',        // Technical Loss
+      'WO': 'final',         // WalkOver
+    };
+
+    const status = statusMap[apiGame.game.status.short] || 'scheduled';
+    const isLive = ['live', 'halftime'].includes(status);
+    const isFinal = status === 'final';
+
+    return {
+      gameId: apiGame.game.id.toString(),
+      sportType: 'football',
+      homeTeam: apiGame.teams.home.name,
+      awayTeam: apiGame.teams.away.name,
+      homeTeamLogo: apiGame.teams.home.logo,
+      awayTeamLogo: apiGame.teams.away.logo,
+      homeScore: apiGame.scores.home.total || 0,
+      awayScore: apiGame.scores.away.total || 0,
+      status: status,
+      period: apiGame.game.status.long || null,
+      timeRemaining: isLive ? apiGame.game.status.timer || null : null,
+      scheduledAt: new Date(apiGame.game.date.date || apiGame.game.date.timestamp * 1000),
+      startedAt: isLive || isFinal ? new Date(apiGame.game.date.timestamp * 1000) : null,
+      completedAt: isFinal ? new Date(apiGame.game.date.timestamp * 1000) : null,
+      venue: apiGame.game.venue.name || null,
+      metadata: {
+        league: apiGame.league.name,
+        season: apiGame.league.season,
+        week: apiGame.game.week,
+        apiSportsId: apiGame.game.id,
+        stage: apiGame.game.stage,
+        quarters: {
+          home: apiGame.scores.home,
+          away: apiGame.scores.away,
+        },
+      },
+    };
+  }
 
   /**
    * Generate mock game data for development
