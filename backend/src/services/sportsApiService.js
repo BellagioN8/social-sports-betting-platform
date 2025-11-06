@@ -10,8 +10,8 @@ const USE_REAL_API = process.env.USE_REAL_API === 'true';
 const API_SPORTS_KEY = process.env.API_SPORTS_KEY;
 const API_SPORTS_NFL_URL = 'https://v1.american-football.api-sports.io';
 const TIMEOUT = 15000; // 15 seconds
-// Note: Free tier API only has access to 2021-2023 seasons
-const CURRENT_NFL_SEASON = process.env.API_SPORTS_SEASON || '2023';
+// Use current year for NFL season (can be overridden via env var)
+const CURRENT_NFL_SEASON = process.env.API_SPORTS_SEASON || new Date().getFullYear().toString();
 
 class SportsAPIService {
   /**
