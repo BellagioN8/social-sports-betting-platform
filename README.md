@@ -2,21 +2,27 @@
 
 A social platform for managing, tracking, and discussing sports betting activities without handling real bets. This platform provides a safe environment for users to engage with friends over sports betting without financial risks, focusing on community and entertainment value.
 
-## Project Goal
+## 🎯 Project Goal
 
 Build a social platform that allows users to:
 - Track and manage simulated sports bets
 - Join groups and chat with friends
-- View live sports scores and updates
+- View live sports scores and updates (powered by API Sports)
 - Engage in friendly competition without financial risk
 
-## Success Criteria
+## 📈 Success Criteria
 
 1. At least 200 active users within the first month
 2. 95% uptime for live scores page
 3. 80% of user sessions involve bet entry or chat usage
 4. Zero data breaches
 5. User creation time < 2 seconds
+
+## 📚 Documentation
+
+- **[PLANNING.md](PLANNING.md)** - Architecture, technology decisions, and system design
+- **[TASK.md](TASK.md)** - Active tasks, backlog, and development roadmap
+- **[Database Schema](backend/src/database/SCHEMA.md)** - Complete database documentation
 
 ## Architecture
 
@@ -65,80 +71,197 @@ social-sports-betting-platform/
 └── package.json           # Workspace configuration
 ```
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
-- PostgreSQL (v14 or higher)
-- npm or yarn
+- **Node.js** v18 or higher
+- **PostgreSQL** v14 or higher
+- **npm** or **yarn**
+- **Docker** (optional, for containerized deployment)
+- **API Sports API Key** (optional, for real NFL data)
 
-### Installation
+### Quick Start with Docker (Recommended)
 
-1. Clone the repository:
+The fastest way to get the entire stack running:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/BellagioN8/social-sports-betting-platform.git
+cd social-sports-betting-platform
+
+# 2. Set up environment variables
+cp .env.docker.example .env
+# Edit .env with your configuration
+
+# 3. Start all services
+docker-compose up -d
+
+# 4. Initialize the database
+docker-compose exec backend npm run db:setup
+
+# Access the application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:5000
+# Database: localhost:5433
+```
+
+### Manual Installation
+
+#### 1. Clone and Install
+
 ```bash
 git clone https://github.com/BellagioN8/social-sports-betting-platform.git
 cd social-sports-betting-platform
-```
 
-2. Install dependencies:
-```bash
+# Install all dependencies
 npm run install:all
 ```
 
-3. Set up environment variables:
+#### 2. Database Setup
+
 ```bash
-# Backend configuration
+# Make sure PostgreSQL is running on port 5433 (or configure your port)
+
 cd backend
 cp .env.example .env
-# Edit .env and update database credentials and secrets
+# Edit .env and update database credentials
 
-# Frontend configuration (if needed)
-cd ../frontend
-# Create .env if needed for API endpoints
-```
-
-4. Set up the database:
-```bash
-# Make sure PostgreSQL is running
-# The setup script will create the database if it doesn't exist
-
-cd backend
+# Initialize database and run migrations
 npm run db:setup
+
+# Test database connection
+npm run db:test
 ```
 
-### Development
+#### 3. Configure Environment Variables
 
-Run both frontend and backend in development mode:
+**Backend (.env):**
 ```bash
+cd backend
+cp .env.example .env
+```
+
+Edit `backend/.env` with your configuration:
+- Database credentials
+- JWT secrets (generate secure random strings)
+- API Sports key (if using real data)
+- Encryption key (64-character hex string)
+
+**Generate Secure Keys:**
+```bash
+# JWT Secret
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# Encryption Key
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+#### 4. API Sports Setup (Optional)
+
+For real NFL data:
+1. Sign up at [api-sports.io](https://api-sports.io)
+2. Subscribe to American Football API
+3. Add your API key to `.env`:
+```
+USE_REAL_API=true
+API_SPORTS_KEY=your_api_key_here
+```
+
+## 💻 Development
+
+### Running the Full Stack
+
+```bash
+# From project root - runs both frontend and backend
 npm run dev
 ```
 
-Or run them separately:
+### Running Services Separately
+
 ```bash
-npm run dev:frontend  # Frontend on http://localhost:3000
-npm run dev:backend   # Backend on http://localhost:5000
+# Backend (from project root or backend/)
+npm run dev:backend
+# or
+cd backend && npm run dev
+
+# Frontend (from project root or frontend/)
+npm run dev:frontend
+# or
+cd frontend && npm start
+
+# Access points:
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:5000
+# API Docs: http://localhost:5000/api
+# Health Check: http://localhost:5000/health
 ```
 
-### Testing
+### Docker Development
 
-Run all tests:
 ```bash
+# Start all services
+docker-compose up
+
+# Start in detached mode
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Restart a specific service
+docker-compose restart backend
+
+# Stop all services
+docker-compose down
+
+# Rebuild after code changes
+docker-compose up --build
+```
+
+## 🧪 Testing
+
+### Backend Tests
+
+```bash
+cd backend
+
+# Run all tests
 npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run specific test file
+npm test -- tests/services/sportsApiService.test.js
 ```
 
-Run specific test suites:
+### Frontend Tests
+
 ```bash
-npm run test:backend   # Backend unit tests
-npm run test:frontend  # Frontend unit tests
-npm run test:e2e       # End-to-end tests with Cypress
+cd frontend
+
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
 ```
 
 ### Linting
 
-Run linters:
 ```bash
-npm run lint
+# Backend
+cd backend && npm run lint
+
+# Frontend
+cd frontend && npm run lint
+
+# Fix auto-fixable issues
+npm run lint -- --fix
 ```
 
 ## Validation Commands
